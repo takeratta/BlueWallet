@@ -12,7 +12,6 @@ import {
 } from './';
 import { LightningCustodianWallet } from './lightning-custodian-wallet';
 import WatchConnectivity from '../WatchConnectivity';
-import DeviceQuickActions from './quickActions';
 const encryption = require('../encryption');
 
 export class AppStorage {
@@ -24,7 +23,7 @@ export class AppStorage {
   static ELECTRUM_TCP_PORT = 'electrum_tcp_port';
   static PREFERRED_CURRENCY = 'preferredCurrency';
   static ADVANCED_MODE_ENABLED = 'advancedmodeenabled';
-
+  static DELETEWALLETAFTERUNINSTALLKEY = 'deleteWalletAfterUninstall';
   constructor() {
     /** {Array.<AbstractWallet>} */
     this.wallets = [];
@@ -89,6 +88,11 @@ export class AppStorage {
     }
   }
 
+  async setResetOnAppUninstallTo(value) {
+    await this.setItem('deleteWalletAfterUninstall', value === true ? '1' : '');
+    await RNSecureKeyStore.setResetOnAppUninstallTo(value);
+  }
+
   async storageIsEncrypted() {
     let data;
     try {
@@ -98,6 +102,19 @@ export class AppStorage {
     }
 
     return !!data;
+  }
+
+  async isPasswordInUse(password) {
+    try {
+      let data = await this.getItem('data');
+      data = this.decryptData(data, password);
+      if (data !== null && data !== undefined && data !== false) {
+        return true;
+      }
+    } catch (_e) {
+      return false;
+    }
+    return false;
   }
 
   /**
@@ -125,6 +142,30 @@ export class AppStorage {
     return false;
   }
 
+  async decryptStorage(password) {
+    if (password === this.cachedPassword) {
+      this.cachedPassword = undefined;
+      await this.setItem(AppStorage.FLAG_ENCRYPTED, '');
+      await this.setItem('deleteWalletAfterUninstall', '1');
+      await this.saveToDisk();
+      this.wallets = [];
+      this.tx_metadata = [];
+      return this.loadFromDisk();
+    } else {
+      throw new Error('Wrong password. Please, try again.');
+    }
+  }
+
+  async isDeleteWalletAfterUninstallEnabled() {
+    let deleteWalletsAfterUninstall;
+    try {
+      deleteWalletsAfterUninstall = await this.getItem('deleteWalletAfterUninstall');
+    } catch (_e) {
+      deleteWalletsAfterUninstall = true;
+    }
+    return !!deleteWalletsAfterUninstall;
+  }
+
   async encryptStorage(password) {
     // assuming the storage is not yet encrypted
     await this.saveToDisk();
@@ -138,7 +179,6 @@ export class AppStorage {
     this.cachedPassword = password;
     await this.setItem('data', data);
     await this.setItem(AppStorage.FLAG_ENCRYPTED, '1');
-    DeviceQuickActions.clearShortcutItems();
   }
 
   /**
@@ -246,7 +286,6 @@ export class AppStorage {
             this.tx_metadata = data.tx_metadata;
           }
         }
-        DeviceQuickActions.setQuickActions(this.wallets);
         WatchConnectivity.init();
         WatchConnectivity.shared && (await WatchConnectivity.shared.sendWalletsToWatch());
         return true;
@@ -291,6 +330,7 @@ export class AppStorage {
     let walletsToSave = [];
     for (let key of this.wallets) {
       if (typeof key === 'boolean') continue;
+      if (typeof key === 'string') key = JSON.parse(key);
       if (key.prepareForSerialization) key.prepareForSerialization();
       walletsToSave.push(JSON.stringify({ ...key, type: key.type }));
     }
@@ -323,7 +363,6 @@ export class AppStorage {
     }
     WatchConnectivity.init();
     WatchConnectivity.shared && WatchConnectivity.shared.sendWalletsToWatch();
-    DeviceQuickActions.setQuickActions(this.wallets);
     return this.setItem('data', JSON.stringify(data));
   }
 
