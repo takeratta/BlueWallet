@@ -244,8 +244,9 @@ export class AppStorage {
             this.tx_metadata = data.tx_metadata;
           }
         }
-        WatchConnectivity.init();
-        WatchConnectivity.shared && (await WatchConnectivity.shared.sendWalletsToWatch());
+        WatchConnectivity.shared.wallets = this.wallets;
+        WatchConnectivity.shared.tx_metadata = this.tx_metadata;
+        await WatchConnectivity.shared.sendWalletsToWatch();
         return true;
       } else {
         return false; // failed loading data or loading/decryptin data
@@ -265,6 +266,7 @@ export class AppStorage {
   deleteWallet(wallet) {
     let secret = wallet.getSecret();
     let tempWallets = [];
+
     for (let value of this.wallets) {
       if (value.getSecret() === secret) {
         // the one we should delete
@@ -318,8 +320,9 @@ export class AppStorage {
     } else {
       await this.setItem(AppStorage.FLAG_ENCRYPTED, ''); // drop the flag
     }
-    WatchConnectivity.init();
-    WatchConnectivity.shared && WatchConnectivity.shared.sendWalletsToWatch();
+    WatchConnectivity.shared.wallets = this.wallets;
+    WatchConnectivity.shared.tx_metadata = this.tx_metadata;
+    await WatchConnectivity.shared.sendWalletsToWatch();
     return this.setItem('data', JSON.stringify(data));
   }
 
