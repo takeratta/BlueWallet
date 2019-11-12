@@ -32,7 +32,7 @@ class WatchDataSource: NSObject, WCSessionDelegate {
   }
   
   func processWalletsData(walletsInfo: [String: Any]) {
-    if let walletsToProcess = walletsInfo["wallets"] as? [[String: Any]] {
+      if let walletsToProcess = walletsInfo["wallets"] as? [[String: Any]] {
       wallets.removeAll();
       for (index, entry) in walletsToProcess.enumerated() {
         guard let label = entry["label"] as? String, let balance = entry["balance"] as? String, let type = entry["type"] as? String, let preferredBalanceUnit = entry["preferredBalanceUnit"] as? String, let transactions = entry["transactions"] as? [[String: Any]]  else {
@@ -78,6 +78,10 @@ class WatchDataSource: NSObject, WCSessionDelegate {
     }
   }
   
+  func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
+    WatchDataSource.shared.processWalletsData(walletsInfo: message)
+  }
+  
   func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
     WatchDataSource.shared.processWalletsData(walletsInfo: applicationContext)
   }
@@ -90,12 +94,21 @@ class WatchDataSource: NSObject, WCSessionDelegate {
     WatchDataSource.shared.processWalletsData(walletsInfo: userInfo)
   }
   
+  func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
+    WatchDataSource.shared.processWalletsData(walletsInfo: message)
+  }
+  
   func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
     if activationState == .activated {
       if let existingData = keychain.getData(Wallet.identifier), let walletData = try? NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(existingData) as? [Wallet] {
         guard let walletData = walletData, walletData != self.wallets  else { return }
         wallets = walletData
         WatchDataSource.postDataUpdatedNotification()
+      }
+      WCSession.default.sendMessage(["message" : "sendApplicationContext"], replyHandler: { [weak self] (replyData) in
+        self?.processWalletsData(walletsInfo: replyData)
+      }) { (error) in
+        print(error)
       }
     }
   }

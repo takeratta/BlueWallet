@@ -14,24 +14,33 @@ export default class WatchConnectivity {
     Watch.getIsWatchAppInstalled((err, isAppInstalled) => {
       if (!err) {
         WatchConnectivity.shared.isAppInstalled = isAppInstalled;
+        Watch.subscribeToWatchState((err, watchState) => {
+          if (!err) {
+            if (watchState === 'Activated') {
+              WatchConnectivity.shared.sendWalletsToWatch();
+            }
+          }
+        })
+        Watch.subscribeToMessages(async (err, message, reply) => {
+          if (!err) {
+            if (message.request === 'createInvoice') {
+              const createInvoiceRequest = await this.handleLightningInvoiceCreateRequest(
+                message.walletIndex,
+                message.amount,
+                message.description,
+              );
+              reply({ invoicePaymentRequest: createInvoiceRequest });
+            } else if (message.message === 'sendApplicationContext') {
+              const wallets = await WatchConnectivity.shared.sendWalletsToWatch(WatchConnectivity.shared.wallets);
+              reply(wallets);
+            }
+          } else {
+            reply(err);
+          }
+        });
       }
     });
-    Watch.subscribeToMessages(async (err, message, reply) => {
-      if (!err) {
-        if (message.request === 'createInvoice') {
-          const createInvoiceRequest = await this.handleLightningInvoiceCreateRequest(
-            message.walletIndex,
-            message.amount,
-            message.description,
-          );
-          reply({ invoicePaymentRequest: createInvoiceRequest });
-        } else if (message.message === 'sendApplicationContext') {
-          WatchConnectivity.shared.sendWalletsToWatch(WatchConnectivity.shared.wallets);
-        }
-      } else {
-        reply(err);
-      }
-    });
+  
   }
 
   async handleLightningInvoiceCreateRequest(walletIndex, amount, description) {
@@ -47,10 +56,10 @@ export default class WatchConnectivity {
   }
 
   async sendWalletsToWatch(allWallets) {
-    if (!allWallets) {
+    if (allWallets === undefined) {
       allWallets = this.wallets;
     }
-    InteractionManager.runAfterInteractions(async () => {
+    return InteractionManager.runAfterInteractions(async () => {
       if (this.isAppInstalled) {
         let wallets = [];
         for (const wallet of allWallets) {
@@ -134,6 +143,7 @@ export default class WatchConnectivity {
           });
         }
         Watch.updateApplicationContext({ wallets });
+        return { wallets };
       }
     });
   }

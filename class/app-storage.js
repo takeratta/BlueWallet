@@ -246,7 +246,7 @@ export class AppStorage {
         }
         WatchConnectivity.shared.wallets = this.wallets;
         WatchConnectivity.shared.tx_metadata = this.tx_metadata;
-        await WatchConnectivity.shared.sendWalletsToWatch();
+        await WatchConnectivity.shared.sendWalletsToWatch(this.wallets);
         return true;
       } else {
         return false; // failed loading data or loading/decryptin data
