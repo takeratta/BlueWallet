@@ -80,6 +80,14 @@
                                 <segue destination="egq-Yw-qK5" kind="push" identifier="ReceiveInterfaceController" id="zEG-Xi-Smb"/>
                             </connections>
                         </button>
+                        <button width="1" alignment="left" hidden="YES" title="Create Invoice" id="7bc-tt-Pab" userLabel="Create Invoice">
+                            <color key="titleColor" red="0.1843137255" green="0.37254901959999998" blue="0.70196078429999997" alpha="1" colorSpace="calibratedRGB"/>
+                            <color key="backgroundColor" red="0.80000000000000004" green="0.86666666670000003" blue="0.97647058819999999" alpha="1" colorSpace="calibratedRGB"/>
+                            <fontDescription key="font" type="system" weight="medium" pointSize="16"/>
+                            <connections>
+                                <action selector="createInvoiceTapped" destination="XWa-4i-Abg" id="0YZ-PF-kAC"/>
+                            </connections>
+                        </button>
                         <label alignment="center" verticalAlignment="bottom" text="No Transactions" textAlignment="left" id="pi4-Bk-Jiq"/>
                         <table alignment="left" id="nyQ-lX-DX0">
                             <items>
@@ -123,6 +131,7 @@
                         </table>
                     </items>
                     <connections>
+                        <outlet property="createInvoiceButton" destination="7bc-tt-Pab" id="CcN-EV-pnQ"/>
                         <outlet property="noTransactionsLabel" destination="pi4-Bk-Jiq" id="zft-Hw-KuZ"/>
                         <outlet property="receiveButton" destination="bPO-h8-ccD" id="xBq-42-9qP"/>
                         <outlet property="transactionsTable" destination="nyQ-lX-DX0" id="N1x-px-s08"/>
