@@ -246,6 +246,10 @@ export class AppStorage {
         }
         WatchConnectivity.shared.wallets = this.wallets;
         WatchConnectivity.shared.tx_metadata = this.tx_metadata;
+        WatchConnectivity.shared.fetchTransactionsFunction = async () => {
+          await this.fetchWalletTransactions();
+          await this.saveToDisk();
+        };
         await WatchConnectivity.shared.sendWalletsToWatch(this.wallets);
         return true;
       } else {

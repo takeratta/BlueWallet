@@ -4,7 +4,8 @@ const loc = require('./loc');
 export default class WatchConnectivity {
   isAppInstalled = false;
   static shared = new WatchConnectivity();
-  wallets = [];
+  wallets;
+  fetchTransactionsFunction = () => {};
 
   constructor() {
     this.getIsWatchAppInstalled();
@@ -20,7 +21,7 @@ export default class WatchConnectivity {
               WatchConnectivity.shared.sendWalletsToWatch();
             }
           }
-        })
+        });
         Watch.subscribeToMessages(async (err, message, reply) => {
           if (!err) {
             if (message.request === 'createInvoice') {
@@ -31,8 +32,10 @@ export default class WatchConnectivity {
               );
               reply({ invoicePaymentRequest: createInvoiceRequest });
             } else if (message.message === 'sendApplicationContext') {
-              const wallets = await WatchConnectivity.shared.sendWalletsToWatch(WatchConnectivity.shared.wallets);
-              reply(wallets);
+              await WatchConnectivity.shared.sendWalletsToWatch(WatchConnectivity.shared.wallets);
+            } else if (message.message === 'fetchTransactions') {
+              await WatchConnectivity.shared.fetchTransactionsFunction();
+              
             }
           } else {
             reply(err);
@@ -40,7 +43,6 @@ export default class WatchConnectivity {
         });
       }
     });
-  
   }
 
   async handleLightningInvoiceCreateRequest(walletIndex, amount, description) {
@@ -56,11 +58,14 @@ export default class WatchConnectivity {
   }
 
   async sendWalletsToWatch(allWallets) {
-    if (allWallets === undefined) {
-      allWallets = this.wallets;
+    if (allWallets === undefined && WatchConnectivity.shared.wallets !== undefined) {
+      allWallets = WatchConnectivity.shared.wallets;
+    }
+    if (allWallets && allWallets.length === 0) {
+      return;
     }
     return InteractionManager.runAfterInteractions(async () => {
-      if (this.isAppInstalled) {
+      if (WatchConnectivity.shared.isAppInstalled) {
         let wallets = [];
         for (const wallet of allWallets) {
           let receiveAddress = '';
@@ -125,8 +130,8 @@ export default class WatchConnectivity {
             } else {
               amount = loc.formatBalance(transaction.value, wallet.getPreferredBalanceUnit(), true).toString();
             }
-            if (this.tx_metadata[transaction.hash] && this.tx_metadata[transaction.hash]['memo']) {
-              memo = this.tx_metadata[transaction.hash]['memo'];
+            if (WatchConnectivity.shared.tx_metadata[transaction.hash] && WatchConnectivity.shared.tx_metadata[transaction.hash]['memo']) {
+              memo = WatchConnectivity.shared.tx_metadata[transaction.hash]['memo'];
             } else if (transaction.memo) {
               memo = transaction.memo;
             }
@@ -142,7 +147,7 @@ export default class WatchConnectivity {
             transactions: watchTransactions,
           });
         }
-        Watch.updateApplicationContext({ wallets });
+        Watch.updateApplicationContext({ wallets, randomID: Math.floor(Math.random() * 11) });
         return { wallets };
       }
     });

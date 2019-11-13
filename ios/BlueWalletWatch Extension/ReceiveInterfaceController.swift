@@ -7,6 +7,7 @@
 //
 
 import WatchKit
+import WatchConnectivity
 import Foundation
 import EFQRCode
 
@@ -46,6 +47,7 @@ class ReceiveInterfaceController: WKInterfaceController {
               self?.imageInterface.setHidden(false)
               self?.imageInterface.setImage(nil)
               self?.imageInterface.setImage(image)
+              WCSession.default.sendMessage(["message": "fetchTransactions"], replyHandler: nil, errorHandler: nil)
             } else {
               self?.pop()
               self?.presentAlert(withTitle: "Error", message: "Unable to create invoice. Please, make sure your iPhone is paired and nearby.", preferredStyle: .alert, actions: [WKAlertAction(title: "OK", style: .default, handler: { [weak self] in

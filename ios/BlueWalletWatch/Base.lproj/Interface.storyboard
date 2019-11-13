@@ -216,7 +216,7 @@
                         <separator alignment="left" alpha="0.0" id="i7u-PI-g7Q">
                             <color key="color" red="0.63137254899999995" green="0.63137254899999995" blue="0.63137254899999995" alpha="0.84999999999999998" colorSpace="calibratedRGB"/>
                         </separator>
-                        <button width="1" alignment="left" verticalAlignment="bottom" title="Create" id="6eh-lx-UEe">
+                        <button width="1" alignment="left" verticalAlignment="bottom" title="Create" enabled="NO" id="6eh-lx-UEe">
                             <color key="titleColor" red="0.1843137255" green="0.37254901959999998" blue="0.70196078429999997" alpha="1" colorSpace="calibratedRGB"/>
                             <color key="backgroundColor" red="0.80000000000000004" green="0.86666666670000003" blue="0.97647058819999999" alpha="1" colorSpace="calibratedRGB"/>
                             <fontDescription key="font" type="system" weight="medium" pointSize="16"/>
@@ -227,6 +227,7 @@
                     </items>
                     <connections>
                         <outlet property="amountButton" destination="0Hm-hv-Yi3" id="9DN-zh-BGB"/>
+                        <outlet property="createButton" destination="6eh-lx-UEe" id="1T3-m4-oVN"/>
                         <outlet property="descriptionButton" destination="fcI-6Z-moQ" id="a7M-ZD-Zsi"/>
                     </connections>
                 </controller>
